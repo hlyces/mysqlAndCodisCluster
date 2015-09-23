@@ -1,0 +1,90 @@
+1.安装之前最好先将yum源改为163,建议将data目录放于根目录下面，不然得改配置文件路径
+2.安装依赖包yum install -y gcc make g++ gcc-c++ automake lrzsz openssl-devel zlib-* bzip2-* readline* zlib-* bzip2-*	
+3.打开/etc/hosts,配置ip的hostname(此处根据自己的ip配置)
+	192.168.43.130    vmware-130
+	192.168.43.131    vmware-131
+	192.168.43.132    vmware-132
+4.安装zookeeper（130,131,132安装顺序为1,2,3）
+	1）修改config-file下面的zoo.cfg文件的ip配置 （ps：一下文件均修个ip及参数顺序配置）
+	2）运行install-bash下面的zookeeper脚本 ./zookkeeper-compile-step.sh zkServer +序号
+	3）source /etc/profile
+	4) 在/etc/sysconfig/iptables的22号端口下面加入
+		-A IN_public_allow -p tcp -m tcp --dport 2181 -m conntrack --ctstate NEW -j ACCEPT
+		-A IN_public_allow -p tcp -m tcp --dport 2888 -m conntrack --ctstate NEW -j ACCEPT
+		-A IN_public_allow -p tcp -m tcp --dport 3888 -m conntrack --ctstate NEW -j ACCEPT
+
+
+5.安装codis （此时codis_proxy_1，codis_proxy_3为131，codis_proxy_2，codis_proxy_4为132，codis-ha为131，codis-dash为132）
+	1）codis_server、codi_proxy
+		修改config-file下面的*config.ini与*start_proxy以及*set_proxy_online为对应的ip
+		config.ini
+			其中zk=。。。。。为配置机子的名字
+			dashboard_addr的ip是配置dashboard的IP地址，两机子一样，此处默认为192.168.1.132
+			proxy_id为代理机子的顺序
+	
+	 2）codis_dashboard （此处配置在132上）
+		修改confi-file下面的start_dashboard 
+			此处为对应主机配置文件-c $CODIS_HOME/conf/2config.ini
+		修改confi-file下面的initslot.sh
+			此处为对应主机配置文件-c $CODIS_HOME/conf/2config.ini
+								
+	 3）codis_ha（此处配置在131上）
+		修改config-file下的start_codis_ha
+			此处IP为对应的ip为步骤1 上对应的dashboard_addr的ip
+	
+	 4）执行 codis-proxy-and-server-compile-step.sh：：：：./codis-compile-step.sh codis_server +序号
+		在1,3所属IP上执行./codis-compile-step.sh codis_server 1
+		在2,4所属IP上执行./codis-compile-step.sh codis_server 2
+	
+	 5）设置端口 vim /etc/sysconfig/iptables
+		-A IN_public_allow -p tcp -m tcp --dport 2181 -m conntrack --ctstate NEW -j ACCEPT
+		-A IN_public_allow -p tcp -m tcp --dport 18087 -m conntrack --ctstate NEW -j ACCEPT
+		-A IN_public_allow -p tcp -m tcp --dport 6379 -m conntrack --ctstate NEW -j ACCEPT
+		-A IN_public_allow -p tcp -m tcp --dport 6380 -m conntrack --ctstate NEW -j ACCEPT
+		-A IN_public_allow -p tcp -m tcp --dport 19000 -m conntrack --ctstate NEW -j ACCEPT
+		-A IN_public_allow -p tcp -m tcp --dport 19001 -m conntrack --ctstate NEW -j ACCEPT
+	     重启防火墙：service iptables restart	
+
+	  6)如果其中一个codis_proxy进程挂掉，记得 到zk的bin目录下运行zkCli.sh,然后执行rmr /zk/codis/db_codis/fence
+
+
+
+6.安装haproxy&&keppalived（此处仅配置两台机子，如130为主，132为备份）
+	1）修改config-file下面的haproxy.cfg  keepalived.conf
+		haproxy.cfg 修改对应的ip
+		keepalived.conf
+			priority 100      #备用为90
+
+			virtual_ipaddress {
+			        192.168.1.130
+			}
+	2)运行install-bash下面的ha-keep脚本
+        3）设置端口 vim /etc/sysconfig/iptables
+		-A IN_public_allow -p tcp -m tcp --dport 8099 -m conntrack --ctstate NEW -j ACCEPT
+		-A IN_public_allow -p tcp -m tcp --dport 45001 -m conntrack --ctstate NEW -j ACCEPT
+		-A IN_public_allow -p tcp -m tcp --dport 23306 -m conntrack --ctstate NEW -j ACCEPT
+
+7.启动步骤(可在安装完4/5/6之后就启动对应的步骤，以便测试是否安装正确)
+	到start_codis_setp目录下面
+	1）先将三台机子的1_zookeeper_start.sh启动，查看状态是否成功
+	2）在主机（142）上运行2_dashboardsolt_start.sh，在第二台机子上运行2_2_start_codis_ha.sh
+	3）在两台机子上都启动3_*配置网页
+	4）在两台机子上都启动4_*、5_*
+	5） 6_haproxy_keepalived_start.sh启动haproxy与keepalived
+
+8.因实际需要，将6379.conf 6380.conf 下面的data路径配置到了、dffx/codis_data下面
+  将mysql_cluster安装至/dffx/mysql下面
+
+
+
+
+
+
+
+
+
+
+
+
+
+

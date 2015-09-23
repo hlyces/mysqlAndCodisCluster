@@ -1,0 +1,21 @@
+此文档为mysql集群的安装部署
+1.在安装之前，先移除本机已有的mysql，特别注意，将/var/lib/mysql（原mysql的安装目录）删除，将此安装包放到/usr/local目录下
+2.本配置文件120为管理节点，121、122为数据节点和sql节点，请根据自己的配位修改config.ini以及my.cnf的配置ip
+3.运行compile-setp.sh脚本
+	ps：配置的三台机子均做以上操作
+4.完成mysql-cluster的安装后，开始运行脚本
+	在mgm节点上运行:mgm_start.sh
+	在ndbd节点上运行：ndbd_start.sh
+	等两个ndbd均启动后，再运行mysql_start.sh
+  	ps:最好不要修改以上启动步骤
+
+5.在启动之前，先开放防火墙端口
+	mgm节点：在 /etc/sysconfig/iptables的22好端口下面加入：
+	 -A IN_public_allow -p tcp -m tcp --dport 1186 -m conntrack --ctstate NEW -j ACCEPT
+	
+	ndbd节点：在 /etc/sysconfig/iptables的22好端口下面加入：（此处50000是管理节点配置文件里面的ndbd监听端口）
+	 -A IN_public_allow -p tcp -m tcp --dport 50000 -m conntrack --ctstate NEW -j ACCEPT	
+
+	sql节点：在 /etc/sysconfig/iptables的22好端口下面加入：
+	 -A IN_public_allow -p tcp -m tcp --dport 3306 -m conntrack --ctstate NEW -j ACCEPT	
+然后重启防火墙：service iptables restart	
