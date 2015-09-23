@@ -1,0 +1,19 @@
+5. 软件包版本以及下载地址：
+jdk1.8.0_45
+zookeeper-3.4.6
+go1.4.2
+pcre-8.37
+haproxy-1.4.22
+keepalived-1.4.26
+ 
+cd /data/packages
+wget http://apache.fayea.com/zookeeper/zookeeper-3.4.6/zookeeper-3.4.6.tar.gz
+wget http://golangtc.com/static/go/go1.4.2.linux-amd64.tar.gz
+wget ftp://ftp.csx.cam.ac.uk/pub/software/programming/pcre/pcre-8.37.tar.gz
+wget http://www.keepalived.org/software/keepalived-1.2.16.tar.gz
+ 
+通过浏览器自行下载: 
+http://www.oracle.com/technetwork/java/javase/downloads/jdk8-downloads-2133151.html
+http://www.haproxy.org/download/1.4/src/haproxy-1.4.26.tar.gz 
+
+mysql-cluster-gpl-7.4.6-linux-glibc2.5-x86_64.tar.gz
